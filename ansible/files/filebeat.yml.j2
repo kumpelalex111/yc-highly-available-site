@@ -1,0 +1,34 @@
+filebeat.inputs:
+- type: filestream
+  id: nginx-filestream-id
+  enabled: true
+  paths:
+      - /var/log/nginx/access.log
+      - /var/log/nginx/error.log
+
+
+filebeat.config.modules:
+  path: /etc/filebeat/modules.d/*.yml
+  reload.enabled: true
+  reload.period: 10s
+
+filebeat.modules:
+- module: nginx
+  access:
+    enabled: true
+    var.paths: ["/var/log/nginx/access.log*"]
+  error:
+    enabled: true
+    var.paths: ["/var/log/nginx/error.log*"]
+
+
+output.elasticsearch:
+  hosts: ["{{ elastic_ip }}:9200"]
+  protocol: https
+  username: "elastic"
+  password: "{{ elastic_passwd }}"
+    #api_key: "Wi02bHBab0JtMmhjOWthZU1iMDA6eE93aWJYRkNKamtNWmR0Undfc29CQQ=="
+  ssl:
+    verification_mode: none
+
+

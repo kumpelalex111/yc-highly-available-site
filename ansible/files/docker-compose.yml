@@ -1,0 +1,34 @@
+services:
+  elasticsearch:
+    image: elasticsearch:9.1.2
+    ports:
+      - 9200:9200
+    environment:
+      #Опция xpack отключает запрос пароля. В учебных целях иногда можно указать. Тогда пароль запрашиваться не будет
+      #- xpack.security.enabled=false
+      - discovery.type=single-node
+
+        # logstash:
+        #   image: logstash:9.1.2
+        #   ports:
+        #     - 5044:5044
+        #   volumes:
+      #- ./logstash:/usr/share/logstash/config/
+      #- /test/logstash/pipelines.yml:/usr/share/logstash/pipeline/pipelines.yml
+      #- /test/logstash/nginx.conf:/usr/share/logstash/config/nginx.conf
+        #environment:
+    # Также отключает запрос пароля в logstash (только для учебы и только иногда)
+    #  XPACK_MONITORING_ENABLED: "false"
+     
+
+  kibana:
+    container_name: kibana
+    image: kibana:9.1.2
+      #volumes:
+      #- /test/kibana_config.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+
+  

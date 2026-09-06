@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пример HTML-документа</title>
+</head>
+<body>
+	<h1>Основные сведения о системе {{ ansible_nodename }}</h1>
+	<p> IP-address  {{ ansible_all_ipv4_addresses }} </p>
+	<p> Memory total (MB) {{ ansible_memtotal_mb }}</p>
+	<p> CPU -  {{ ansible_processor }} </p?
+</body>
+</html>

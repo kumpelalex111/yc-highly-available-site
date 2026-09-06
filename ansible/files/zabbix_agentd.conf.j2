@@ -1,0 +1,32 @@
+# This is a configuration file for Zabbix agent daemon (Unix)
+# To get more information about Zabbix, visit https://www.zabbix.com
+
+############ GENERAL PARAMETERS #################
+
+### Option: PidFile
+PidFile=/run/zabbix/zabbix_agentd.pid
+
+
+### Option: LogFile
+LogFile=/var/log/zabbix/zabbix_agentd.log
+
+### Option: LogFileSize
+LogFileSize=0
+
+##### Passive checks related
+Server= {{ zabbix_ip }}
+
+##### Active checks related
+
+### Option: ServerActive
+ServerActive= {{ zabbix_ip }}
+
+### Option: Hostname
+Hostname= {{ ansible_facts['hostname'] }}
+
+############ ADVANCED PARAMETERS #################
+
+####### Additional configuration files  #######
+
+### Option: Include
+Include=/etc/zabbix/zabbix_agentd.d/*.conf

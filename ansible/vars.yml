@@ -1,0 +1,8 @@
+zabbix_ip: 10.0.10.19
+elastic_ip: 10.0.10.10
+kibana: 158.160.55.70
+web_hosts:
+  - web1: 10.0.10.23
+  - web2: 10.0.11.27
+
+elastic_passwd: ""

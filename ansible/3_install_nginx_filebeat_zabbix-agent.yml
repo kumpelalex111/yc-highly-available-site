@@ -1,0 +1,93 @@
+---
+- name: "Установка zabbix-agent, filebeat и nginx"
+  become: true
+  hosts: web
+  vars_files: vars.yml
+  vars:
+    elastic_passwd: msislMwhPS=*NNkCOXeR
+  tasks:
+  # Установка zabbix-agent
+    - name: "Download repo"
+      ansible.builtin.get_url:
+        url: "https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb"
+        dest: "/home/alex/zabbix-release_latest_7.0+ubuntu24.04_all.deb"
+        mode: 0644
+
+    - name: "Install repo"
+      ansible.builtin.apt:
+        deb: "/home/alex/zabbix-release_latest_7.0+ubuntu24.04_all.deb"
+
+    - name: "Install zabbix agent"
+      ansible.builtin.apt:
+        name: "zabbix-agent"
+        state: latest
+        update_cache: yes
+
+    - name: Conf zabbix agent
+      ansible.builtin.template:
+        src: files/zabbix_agentd.conf.j2
+        dest: /etc/zabbix/zabbix_agentd.conf
+        owner: root
+        group: root
+        mode: "0644"
+
+
+    - name: restart zabbix agent
+      ansible.builtin.service:
+        name: "zabbix-agent"
+        state: restarted
+
+# Установка nginx
+    - name: Уствновка nginx
+      ansible.builtin.apt:
+        name: nginx
+        update_cache: true
+        state: latest
+
+    - name: Удалить заглушку по умолчанию
+      ansible.builtin.file:
+        path: /var/www/html/*
+        state: absent
+
+    - name: Скопировать содержимое сайта
+      ansible.builtin.template:
+        src: ./files/index.html.j2
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Перезапуск nginx
+      ansible.builtin.service:
+        name: nginx
+        state: "reloaded"
+        enabled: true
+
+# Установка filebeat
+    - name: Скопировать дистрибутив filebeat
+      ansible.builtin.copy:
+        src: ./files/filebeat-9.2.0-amd64.deb
+        dest: /tmp/
+        owner: root
+        group: root
+        mode: "0770"
+
+    - name: Установка дистрибутива filebeat
+      ansible.builtin.apt:
+        deb: /tmp/filebeat-9.2.0-amd64.deb
+        state: present
+        update_cache: false
+
+    - name: Config filebeat
+      ansible.builtin.template:
+        src: ./files/filebeat.yml.j2
+        dest: /etc/filebeat/filebeat.yml
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Start filebeat
+      ansible.builtin.service:
+        name: filebeat
+        state: started
+

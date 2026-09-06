@@ -1,0 +1,32 @@
+---
+- name: Playbook
+  hosts: web
+  become: true
+  tasks:
+  - name: "Install nginx via apt"
+    ansible.builtin.apt:
+      name: nginx
+      state: latest
+      update_cache: true  
+
+  - name: "Delete /var/www/html folder"
+    ansible.builtin.file:
+      path: "/var/www/html"
+      state: "absent"
+
+  - name: "Copy site to /var/www/html folder"
+    ansible.builtin.copy:
+      src: "/home/alex/kurs/files/html"
+      dest: "/var/www/"
+      owner: "alex"
+      group: "alex"
+      mode: "0644"
+
+  - name: "Reload nginx"
+    ansible.builtin.service:
+      name: "nginx"
+      state: "reloaded"
+      enabled: yes
+
+
+

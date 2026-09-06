@@ -1,0 +1,194 @@
+---
+- name: "Установка MySQL и Zabbix server"
+  hosts: zabbix
+  become: yes
+  vars:
+    root_mysql_passwd: "Zz12345"
+  tasks:
+  - name: "Установка mysql"
+    ansible.builtin.apt:
+      name: mysql-server
+      state: latest
+      update_cache: true
+
+  - name: "Установка pymysql"
+    ansible.builtin.apt:
+      name: "python3-pymysql"
+      state: latest
+      update_cache: true
+
+  - name: "Установка пользователя root"
+    community.mysql.mysql_user:
+      name: "root"
+      password: "{{ root_mysql_passwd }}"
+      login_user: "root"
+      login_password: "{{ root_mysql_passwd }}"
+      check_implicit_admin: true
+      login_unix_socket: "/var/run/mysqld/mysqld.sock"
+
+  - name: "Удаление пользователя anonimous"
+    community.mysql.mysql_user:
+      name: ""
+      state: "absent"
+      login_user: "root"
+      login_password: "{{ root_mysql_passwd }}"
+
+  - name: "Удаление тестовой db"
+    community.mysql.mysql_db:
+      name: ""
+      state: "absent"
+      login_user: "root"
+      login_password: "{{ root_mysql_passwd }}"
+
+  - name: "Download repo"
+    ansible.builtin.get_url:
+      url: "https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb"
+      dest: "/home/alex/zabbix-release_latest_7.0+ubuntu24.04_all.deb"
+      mode: 0644
+
+  - name: "Install repo"
+    ansible.builtin.apt:
+      deb: "/home/alex/zabbix-release_latest_7.0+ubuntu24.04_all.deb"
+
+
+          #- name: "Configure SELinux when enabled"
+          #ansible.builtin.include_tasks: selinux.yml
+          #when: ansible_facts.selinux.status | default('disabled') == 'enabled'
+
+  - name: "Install Zabbix-Server"
+    ansible.builtin.apt:
+      name: zabbix-server-mysql
+      update_cache: true
+
+  - name: "Install packages for Zabbix-Server"
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: true
+      install_recommends: true
+    with_items:
+        - "zabbix-frontend-php"
+        - "zabbix-nginx-conf"
+        - "zabbix-sql-scripts"
+        - "zabbix-agent"
+
+  - name: Copy file zabbix_server.conf
+    ansible.builtin.copy:
+      src: ./files/zabbix_server.conf
+      dest: /etc/zabbix/zabbix_server.conf
+      owner: root
+      group: root
+      mode: '0600'
+      backup: true
+      force: true
+
+  - name: Install nginx
+    ansible.builtin.apt:
+      name: nginx
+      state: latest
+
+
+  - name: Copy file nginx.conf
+    ansible.builtin.copy:
+      src: ./files/zabbix_nginx.conf
+      dest: /etc/zabbix/nginx.conf
+      owner: root
+      group: root
+      mode: '0644'
+      backup: true
+      force: true
+
+
+
+  - name: Create a new database "zabbix_base"
+    community.mysql.mysql_db:
+      login_host: localhost
+      login_user: root
+      login_password: "{{ root_mysql_passwd }}"
+      name: zabbix_base
+      state: present
+      login_unix_socket: /run/mysqld/mysqld.sock
+
+
+  - name: Create database user zabbix
+    community.mysql.mysql_user:
+      login_user: root
+      login_password: "{{ root_mysql_passwd }}"
+      name: zabbix
+      password: zabbix12345
+      priv: 'zabbix_base.*:ALL,GRANT'
+      state: present
+
+
+  - name: Set log_bin_trust_function_creators variable to 1 global
+    community.mysql.mysql_variables:
+      login_user: root
+      login_password: "{{ root_mysql_passwd }}"
+      variable: log_bin_trust_function_creators
+      value: 1
+      mode: global
+
+  - name: Set innodb_strict_mode to 0 global
+    community.mysql.mysql_variables:
+      login_user: root
+      login_password: "{{ root_mysql_passwd }}"
+      variable: innodb_strict_mode
+      value: 0
+      mode: global
+
+  - name: "MySQL | Import schema"
+    community.mysql.mysql_db:
+      login_user: root
+      login_password: "{{ root_mysql_passwd }}"
+      name: zabbix_base
+      config_file: ""
+      encoding: utf8
+      collation: utf8_bin
+      state: import
+      target: /usr/share/zabbix-sql-scripts/mysql/server.sql.gz
+
+  - name: Set log_bin_trust_function_creators variable to 0 global
+    community.mysql.mysql_variables:
+      login_user: root
+      login_password: "{{ root_mysql_passwd }}"
+      variable: log_bin_trust_function_creators
+      value: 0
+      mode: global
+
+
+  - name: Restart services
+    ansible.builtin.service:
+      name: "{{ item }}"
+      state: restarted
+      enabled: true
+    with_items:
+        - "mysql"
+        - "nginx"
+        - "zabbix-server"
+
+          #- name: Create a new host
+          #  community.zabbix.zabbix_host:
+          #    host_name: web1
+          #    visible_name: web1
+          #    description: Add host to zabbix.
+          #    host_groups:
+          #      - Linux servers
+          #    link_templates:
+          #      - Linux minimal
+          #      - Linux filesystems by Zabbix agent
+          #    status: enabled
+          #    state: present
+          #    interfaces:
+          #      - type: 1
+          #        main: 1
+          #        useip: 1
+          #        ip: {{ zabbix_ip }}
+          #        dns: ""
+          #        port: 10050
+          #    tags:
+          #      - tag: os
+          #        value: linux---
+
+
+# --ask-become-pass "Task name"
+                                                               
