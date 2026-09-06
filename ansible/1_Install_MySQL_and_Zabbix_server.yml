@@ -166,29 +166,5 @@
         - "nginx"
         - "zabbix-server"
 
-          #- name: Create a new host
-          #  community.zabbix.zabbix_host:
-          #    host_name: web1
-          #    visible_name: web1
-          #    description: Add host to zabbix.
-          #    host_groups:
-          #      - Linux servers
-          #    link_templates:
-          #      - Linux minimal
-          #      - Linux filesystems by Zabbix agent
-          #    status: enabled
-          #    state: present
-          #    interfaces:
-          #      - type: 1
-          #        main: 1
-          #        useip: 1
-          #        ip: {{ zabbix_ip }}
-          #        dns: ""
-          #        port: 10050
-          #    tags:
-          #      - tag: os
-          #        value: linux---
-
-
-# --ask-become-pass "Task name"
-                                                               
+                                                              
+ 
